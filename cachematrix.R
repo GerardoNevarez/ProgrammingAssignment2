@@ -99,3 +99,5 @@ cacheSolve <- function(x, ...) {
     # returns the inverse as function result
     inverse
 }
+
+# FYI - tabs > 4 hurts my eyes!!! (been developing since the 90's) 
