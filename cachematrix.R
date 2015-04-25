@@ -18,7 +18,7 @@ makeCacheMatrix <- function(x = matrix()) {
     ## function to set a new value for the matrix (deletes the cached result)
     set <- function(y) {
         x <<- y
-        # Set change flag
+        # Sets change flag
         changed <<- TRUE
     }
     
@@ -27,7 +27,7 @@ makeCacheMatrix <- function(x = matrix()) {
         changed
     }
     
-    ## Sets the changed flag
+    ## Resets change flag
     resetChanged <- function(){
         changed <<- FALSE
     }
@@ -62,27 +62,40 @@ makeCacheMatrix <- function(x = matrix()) {
 ## matrix has not changed), then the cachesolve should retrieve the inverse
 ## from the cache.
 
-## In order to verify that the original matrix has not changed, the cached
-## matrix is multiplied by the original, and the result is compared to an
-## identity matrix of the appropiate size
+## In order to verify that the original matrix has not changed, we maintain a
+## logical/boolean flag to determine if the matrix data has been changed through
+## set() function
 
 cacheSolve <- function(x, ...) {
         ## Return a matrix that is the inverse of 'x'
         ## X is the result of a call to makeCacheMatrix()
     
+    # Get cached inverse
     inverse <- x$getCachedInverse()
+    
+    # if there is actually a value cached... 
     if(!is.null(inverse)) {
+        # And the original matrix has NOT changed...
         if(!x$isChanged()){
+            # return the cached inverse
             message("getting cached data")
             return(inverse)
         } else {
+            # ELSE
+            # resets/erases the cached inverse
             x$setCachedInverse(NULL)
+            # and sends a messageadvising of the data change
             message("matrix changed since previous cacheSolve() invocation!")
         }
     }
+    # Gets the matrix to be inversed/solved
     data <- x$get()
+    # Obtains the inverse by making a call to solve()
     inverse <- solve(data, ...)
+    # stores/cached the result
     x$setCachedInverse(inverse)
+    # resets the "data changed" flag
     x$resetChanged()
+    # returns the inverse as function result
     inverse
 }
