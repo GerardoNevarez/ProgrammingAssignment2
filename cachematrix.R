@@ -13,14 +13,25 @@ makeCacheMatrix <- function(x = matrix()) {
     
     ## Variable to store the cached result
     cache <- NULL
+    changed <- FALSE
     
     ## function to set a new value for the matrix (deletes the cached result)
     set <- function(y) {
         x <<- y
-        #force convoluted logic to detect change!!!
-        #Used to be abl to detect if the matrix changed, and send a message.
-        #cache <<- NULL
+        # Set change flag
+        changed <<- TRUE
     }
+    
+    ## Retrieves the changed flag
+    isChanged <- function(){
+        changed
+    }
+    
+    ## Sets the changed flag
+    resetChanged <- function(){
+        changed <<- FALSE
+    }
+    
     
     ## Retrieves the matrix to be "inversed"
     get <- function(){
@@ -39,7 +50,9 @@ makeCacheMatrix <- function(x = matrix()) {
     
     list(set = set, get = get,
          setCachedInverse = setCachedInverse,
-         getCachedInverse = getCachedInverse)
+         getCachedInverse = getCachedInverse,
+         isChanged = isChanged,
+         resetChanged = resetChanged)
 
 }
 
@@ -57,45 +70,19 @@ cacheSolve <- function(x, ...) {
         ## Return a matrix that is the inverse of 'x'
         ## X is the result of a call to makeCacheMatrix()
     
-    ## Determines if the matrix from where the inverse was calculated has
-    ## changed. 
-    # Parameters:
-    # delta : value to determine if a substraction result is aproximately zero
-    hasNotChanged <- function (delta = 0.001){
-        ##If the is no cache the response is FALSE since the is nothing to
-        ## compare to.
-        if (is.null(x$getCachedInverse())){
-            return(FALSE)
-        }
-        
-        # Multiply matrixes - should be "equal" to the identity matrix
-        product <- x$getCachedInverse() %*% x$get()
-        # Obtain "difference" from the identity matrix (obtained using diag() )
-        difference <- product - diag(nrow=nrow(x$get()))
-        # Holds the result, after comparing all the cells are close enough to zero
-        notChanged <- TRUE
-        # Applies the anonymous function to every matrix cell value. Equivalent
-        # to a "for" loop in both dimensions, compares the delta with the cell
-        # value, and determines if any of the values are bigger than the delta
-        # (thus, considered a non-zero value)
-        apply(difference, c(1,2), function(c){
-            notChanged <<- notChanged & (c < delta)
-            }
-        )
-        notChanged
-    }
-    
     inverse <- x$getCachedInverse()
     if(!is.null(inverse)) {
-        if(hasNotChanged()){
+        if(!x$isChanged()){
             message("getting cached data")
             return(inverse)
         } else {
+            x$setCachedInverse(NULL)
             message("matrix changed since previous cacheSolve() invocation!")
         }
     }
     data <- x$get()
     inverse <- solve(data, ...)
     x$setCachedInverse(inverse)
+    x$resetChanged()
     inverse
 }
